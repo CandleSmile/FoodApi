@@ -9,5 +9,6 @@ namespace DataLayer.Repositories.Interfaces
 {
     public interface IUserRepository: IBaseRepository<User>
     {
+        Task<User?> GetUserByNameAsync(string username);
     }
 }

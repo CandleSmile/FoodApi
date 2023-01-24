@@ -15,4 +15,10 @@
     <ProjectReference Include="..\DataLayer\DataLayer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Services\Implementation\UserService.cs">
+      <CopyToOutputDirectory>pa</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
+
 </Project>

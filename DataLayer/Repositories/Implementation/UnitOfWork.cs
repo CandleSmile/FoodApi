@@ -17,9 +17,9 @@ namespace DataLayer.Repositories.Implementation
             
         }
         public IUserRepository Users { get; private set; }
-        public int Save()
+        public Task<int> SaveAsync()
         {
-            return _context.SaveChanges();
+            return _context.SaveChangesAsync();
         }
         public void Dispose()
         {

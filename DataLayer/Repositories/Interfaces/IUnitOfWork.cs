@@ -9,6 +9,6 @@ namespace DataLayer.Repositories.Interfaces
     public interface IUnitOfWork : IDisposable
     {
         IUserRepository Users { get; }
-        int Save();
+        Task<int> SaveAsync();
     }
 }

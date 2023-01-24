@@ -1,5 +1,6 @@
 ﻿using DataLayer.Items;
 using DataLayer.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,11 @@ namespace DataLayer.Repositories.Implementation
     {
         public UserRepository(FoodContext context) : base(context)
         {
+        }
+
+        public async Task<User?> GetUserByNameAsync(string username)
+        {
+            return await _context.Users.FirstAsync(user=> user.Username == username);    
         }
     }
 }

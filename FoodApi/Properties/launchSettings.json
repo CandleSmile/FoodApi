@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "WebApplication1": {
+    "FoodAPI": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

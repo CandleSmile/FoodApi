@@ -17,8 +17,7 @@ namespace DataLayer
         public FoodContext(DbContextOptions<FoodContext> options)
             : base(options)
         {
-           // Database.EnsureDeleted();
-            Database.EnsureCreated();   // создаем базу данных при первом обращении
+           
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
