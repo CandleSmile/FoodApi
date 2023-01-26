@@ -17,7 +17,7 @@ namespace DataLayer.Repositories.Implementation
 
         public async Task<User?> GetUserByNameAsync(string username)
         {
-            return await _context.Users.FirstAsync(user=> user.Username == username);    
+            return await _context.Users.FirstOrDefaultAsync(user=> user.Username == username);    
         }
     }
 }

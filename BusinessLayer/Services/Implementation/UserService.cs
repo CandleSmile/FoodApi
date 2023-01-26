@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Utilities.Helpers;
@@ -48,11 +49,11 @@ namespace BusinessLayer.Services.Implementation
             return _mapper.Map<IEnumerable<UserDto>>(await _unitOfWork.Users.GetAllAsync());
         }
 
-        public string CreateToken(UserDto user)
+        public string CreateToken(string userName)
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username)
+                new Claim(ClaimTypes.Name, userName)
             };
             string? tokenKey = _configuration.GetSection("Jwt")["Key"];
             string? issuer = _configuration.GetSection("Jwt")["Issuer"];
@@ -65,7 +66,8 @@ namespace BusinessLayer.Services.Implementation
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(1), 
+                notBefore: DateTime.UtcNow,
+                expires: DateTime.UtcNow.AddMinutes(5),
                 signingCredentials: cred
             );
 
@@ -79,6 +81,66 @@ namespace BusinessLayer.Services.Implementation
             var user = await _unitOfWork.Users.GetByIdAsync(userDto.Id);
             if (user == null) { return false; }
             return  HashHelper.VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash);
+        }
+
+        public async Task<(string, string)> RefreshToken(string token, string refreshToken)
+        {
+            var principal = GetPrincipalFromExpiredToken(token);
+            var username = principal.Identity.Name;
+            var user = await _unitOfWork.Users.GetUserByNameAsync(username);
+            var savedRefreshToken = user?.RefreshToken; 
+            if (user == null || savedRefreshToken != refreshToken)
+                throw new SecurityTokenException("Invalid refresh token");
+
+            var newJwtToken = CreateToken(username);
+            var newRefreshToken = GenerateRefreshToken();
+            user.Username = newRefreshToken;
+            await _unitOfWork.SaveAsync();
+
+            return (newJwtToken, newRefreshToken);
+         
+        }
+        private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        {
+            string? tokenKey = _configuration.GetSection("Jwt")["Key"];
+            string? issuer = _configuration.GetSection("Jwt")["Issuer"];
+            string? audience = _configuration.GetSection("Jwt")["Audience"];
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = issuer,
+                ValidateAudience = true,
+                ValidAudience = audience,
+                ValidateLifetime = false,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey ?? "")),
+                ValidateIssuerSigningKey = true,
+            };
+            var tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken securityToken;
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+            var jwtSecurityToken = securityToken as JwtSecurityToken;
+            if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+
+            return principal;
+        }
+        public async Task<string> CreateRefreshToken(UserDto userDto)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userDto.Id);
+            if (user == null) 
+                throw new Exception("the user wasn't found");
+            user.RefreshToken = GenerateRefreshToken();
+            await  _unitOfWork.SaveAsync();
+            return user.RefreshToken;
+        }
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
         }
     }
 }

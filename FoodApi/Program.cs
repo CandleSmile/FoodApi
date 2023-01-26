@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,12 +22,24 @@ builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(AppMappingProfile));
 builder.Services.AddTransient<IUserService, UserService>();
 
+//get allowed-origin from Configuration
+string? origin = builder.Configuration["Allowed-origin"];
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowFoodApp",
+                      policy =>
+                      {
+                          if (origin != null)
+                              policy.WithOrigins(origin.Split(',')).AllowAnyHeader().AllowAnyMethod();
+                          else
+                              policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+
+                      });
+});
 
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddCors();
 
 //get data for tokens from Configuration
 string? tokenKey = builder.Configuration.GetSection("Jwt")["Key"];
@@ -45,7 +59,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey??"")),
             ValidateIssuerSigningKey = true,
-            
+            ClockSkew = TimeSpan.Zero
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                {
+                    context.Response.Headers.Add("Token-Expired", "true");
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 //swagger authorization
@@ -85,9 +110,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(builder => builder.AllowAnyOrigin());
+
 
 app.UseHttpsRedirection();
+app.UseCors("AllowFoodApp");
 app.UseAuthentication();
 app.UseAuthorization();
 

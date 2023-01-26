@@ -1,7 +1,10 @@
-﻿using BusinessLayer.Contracts;
+﻿using BusinessLayer;
+using BusinessLayer.Contracts;
 using BusinessLayer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Utilities.Helpers;
 
 namespace FoodApi.Controllers
@@ -9,7 +12,7 @@ namespace FoodApi.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-
+    [EnableCors("AllowFoodApp")]
     public class AuthController : Controller
     {
         private IUserService _userService;
@@ -25,6 +28,7 @@ namespace FoodApi.Controllers
             return Ok(await _userService.GetUsersAsync());
         }
 
+       
         [HttpPost("Register")]
         public async Task<ActionResult<UserDto>> Register(UserDto request)
         {
@@ -43,7 +47,7 @@ namespace FoodApi.Controllers
 
             return Ok(user);
         }
-
+      
         [HttpPost("Login")]
         public async Task<ActionResult<string>> Login(UserDto request)
         {
@@ -51,21 +55,38 @@ namespace FoodApi.Controllers
 
             if (userDto == null)
             {
-                return BadRequest("User not found.");
+                return BadRequest(new Error((int)ErrorCodes.ObjectNotFound, "The User wasn't found"));
             }
             else
             {
                 bool isValid = await _userService.VerifyPasswordHash(request.Password, userDto);
                 if (!isValid)
                 {
-                    return BadRequest("Wrong Password.");
+                    return BadRequest(new Error((int)ErrorCodes.NoValidData, "Password was wrong"));                    
                 }
                 else
                 {
-                    string token = _userService.CreateToken(userDto);                    
-                    return Ok(token);
+                    string token = _userService.CreateToken(userDto.Username);                
+
+                    return Ok(new
+                    {
+                        token,
+                        refreshToken =  await _userService.CreateRefreshToken(userDto)
+                    });
                 }
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Refresh(string token, string refreshToken)
+        {
+           (var newJwtToken, var newRefreshToken) = await  _userService.RefreshToken(token, refreshToken);
+
+            return  Ok(new
+            {
+                token = newJwtToken,
+                refreshToken = newRefreshToken
+            });
         }
     }
 }
