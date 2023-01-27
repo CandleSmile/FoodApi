@@ -14,9 +14,25 @@ namespace DataLayer.Repositories.Implementation
         {
             _context = context;
             Users = new UserRepository(_context);
+            Meals =new MealRepository(_context);
+            Categories= new CategoryRepository(_context);
+            Ingredients= new IngredientRepository(_context);
+            Tags= new TagRepository(_context);
+            Areas= new AreaRepository(_context);
             
         }
         public IUserRepository Users { get; private set; }
+
+        public IMealRepository Meals { get; private set; }
+
+        public IIngredientRepository Ingredients { get; private set; }
+
+        public ITagRepository Tags { get; private set; }
+
+        public ICategoryRepository Categories { get; private set; }
+
+        public IAreaRepository Areas { get; private set; }
+
         public Task<int> SaveAsync()
         {
             return _context.SaveChangesAsync();

@@ -42,6 +42,10 @@ namespace DataLayer.Repositories.Implementation
 
             _context.Set<T>().Remove(entity);
         }
-       
+        public async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            await _context.Set<T>().AddRangeAsync(entities);
+        }
+
     }
 }

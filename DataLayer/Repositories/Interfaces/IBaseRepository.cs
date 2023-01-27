@@ -10,6 +10,8 @@ namespace DataLayer.Repositories.Interfaces
         Task<IEnumerable<T>> GetAllAsync();
 
         Task AddAsync(T entity);
+
+        Task AddRangeAsync(IEnumerable<T> entities);
         Task RemoveAsync(int id);
     }
 }

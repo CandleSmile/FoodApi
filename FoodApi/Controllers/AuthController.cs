@@ -1,11 +1,11 @@
 ﻿using BusinessLayer;
 using BusinessLayer.Contracts;
 using BusinessLayer.Services.Interfaces;
+using FoodApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using Utilities.Helpers;
+
 
 namespace FoodApi.Controllers
 {
@@ -16,9 +16,13 @@ namespace FoodApi.Controllers
     public class AuthController : Controller
     {
         private IUserService _userService;
-        public AuthController(IUserService userService)
+        private IConfiguration _configuration;
+        private IAuthService _authService;
+        public AuthController(IUserService userService, IConfiguration configuration, IAuthService authService)
         {
-            _userService= userService;
+            _userService = userService;
+            _configuration = configuration;
+            _authService = authService;
         }
 
         [HttpGet("GetUsers")]
@@ -30,26 +34,28 @@ namespace FoodApi.Controllers
 
        
         [HttpPost("Register")]
-        public async Task<ActionResult<UserDto>> Register(UserDto request)
+        public async Task<ActionResult<UserDto>> Register(RegistrationModel request)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(new Error((int)ErrorCodes.NoValidData, "Registration info is not valid"));
+
+            var existedUser = await _userService.GetUserByNameAsync(request.Username);
+            if (existedUser!=null) 
+                return BadRequest(new Error((int)ErrorCodes.ObjectAlreadyExists, "The user exists."));
 
             var user = new UserDto()
             {
                 Username = request.Username,
                 Password = request.Password
-            };
-            
-            
+            };                       
 
-            await _userService.AddAsync(user);
+            var savedUser = await _userService.AddAsync(user);
 
-            return Ok(user);
+            return Ok(savedUser);
         }
       
         [HttpPost("Login")]
-        public async Task<ActionResult<string>> Login(UserDto request)
+        public async Task<ActionResult<string>> Login(LoginModel request)
         {
             var userDto = await _userService.GetUserByNameAsync(request.Username);
 
@@ -59,34 +65,25 @@ namespace FoodApi.Controllers
             }
             else
             {
-                bool isValid = await _userService.VerifyPasswordHash(request.Password, userDto);
+                bool isValid = await _authService.VerifyPasswordHash(request.Password, userDto.Id);
                 if (!isValid)
                 {
                     return BadRequest(new Error((int)ErrorCodes.NoValidData, "Password was wrong"));                    
                 }
                 else
                 {
-                    string token = _userService.CreateToken(userDto.Username);                
-
-                    return Ok(new
-                    {
-                        token,
-                        refreshToken =  await _userService.CreateRefreshToken(userDto)
-                    });
+                    string token = _authService.CreateAccessToken(userDto.Username);
+                    string refreshToken = await _authService.CreateRefreshToken(userDto.Id);
+                    _authService.SetTokensToCookies(token, refreshToken);    
+                    return Ok(); 
                 }
             }
         }
-
-        [HttpPost]
-        public async Task<IActionResult> Refresh(string token, string refreshToken)
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout()
         {
-           (var newJwtToken, var newRefreshToken) = await  _userService.RefreshToken(token, refreshToken);
-
-            return  Ok(new
-            {
-                token = newJwtToken,
-                refreshToken = newRefreshToken
-            });
+            _authService.DeleteTokensFromCookies();
+            return Ok();
         }
     }
 }

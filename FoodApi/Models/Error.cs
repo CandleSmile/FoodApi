@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BusinessLayer.Contracts
+namespace FoodApi.Models
 {
     public class Error
     {
