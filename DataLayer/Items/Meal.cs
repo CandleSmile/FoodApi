@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DataLayer.Items
+﻿namespace DataLayer.Items
 {
+    using System.ComponentModel.DataAnnotations;
+
     public class Meal
     {
-        [Key]            
+        [Key]
         public int Id { get; set; }
 
         [Required]
@@ -22,12 +17,15 @@ namespace DataLayer.Items
 
         [Required]
         public int CategoryId { get; set; }
+
         public Category? Category { get; set; }
 
         public int AreaId { get; set; }
+
         public Area? Area { get; set; }
 
         public string? Image { get; set; }
+
         public List<Ingredient>? Ingredients { get; set; }
 
         public List<Tag>? Tags { get; set; }

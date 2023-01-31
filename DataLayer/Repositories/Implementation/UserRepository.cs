@@ -19,5 +19,10 @@ namespace DataLayer.Repositories.Implementation
         {
             return await _context.Users.FirstOrDefaultAsync(user=> user.Username == username);    
         }
+
+        public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
+        {
+            return await _context.Users.FirstOrDefaultAsync(user => user.RefreshToken == refreshToken);
+        }
     }
 }

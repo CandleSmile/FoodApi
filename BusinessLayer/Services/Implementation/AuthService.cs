@@ -1,29 +1,26 @@
-﻿using AutoMapper;
-using BusinessLayer.Contracts;
-using BusinessLayer.Services.Interfaces;
-using DataLayer.Items;
-using DataLayer.Repositories.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Utilities.Helpers;
-
-namespace BusinessLayer.Services.Implementation
+﻿namespace BusinessLayer.Services.Implementation
 {
-    public class AuthService:IAuthService
+    using System.IdentityModel.Tokens.Jwt;
+    using System.Security.Claims;
+    using System.Security.Cryptography;
+    using System.Text;
+    using AutoMapper;
+    using BusinessLayer.Services.Interfaces;
+    using DataLayer.Items;
+    using DataLayer.Repositories.Interfaces;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.IdentityModel.Tokens;
+    using Utilities.ErrorHandle;
+    using Utilities.Helpers;
+
+    public class AuthService : IAuthService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
@@ -31,15 +28,18 @@ namespace BusinessLayer.Services.Implementation
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
         }
+
         public async Task<bool> VerifyPasswordHash(string password, int userId)
         {
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            if (user == null) { 
-                throw new Exception("the user wasn't found");
+            if (user == null)
+            {
+                throw new ModelNotFoundException("User", $"with {userId}");
             }
 
             return HashHelper.VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash);
         }
+
         public string CreateAccessToken(string userName)
         {
             List<Claim> claims = new List<Claim>
@@ -47,8 +47,9 @@ namespace BusinessLayer.Services.Implementation
                 new Claim(ClaimTypes.Name, userName)
             };
             (string? tokenKey, string? issuer, string? audience) = GetConfigurationOfTokens();
-            if (String.IsNullOrEmpty(tokenKey) || String.IsNullOrEmpty(issuer) || String.IsNullOrEmpty(audience)) {
-                throw new Exception("the configuration is empty");
+            if (String.IsNullOrEmpty(tokenKey) || String.IsNullOrEmpty(issuer) || String.IsNullOrEmpty(audience))
+            {
+                throw new BadRequestExeption("The configuration is empty");
             }
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(tokenKey ?? ""));
@@ -67,46 +68,43 @@ namespace BusinessLayer.Services.Implementation
 
             return jwt;
         }
-        
+
         public async Task<string> CreateRefreshToken(int userId)
         {
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null)
-                throw new Exception("the user wasn't found");
+                throw new ModelNotFoundException("User", $"with {userId}");
             user.RefreshToken = RandomBase64String();
             await _unitOfWork.SaveAsync();
             return user.RefreshToken;
         }
 
-        public async Task<(string, string)> RefreshTokens(string accessToken, string refreshToken)
+        public async Task<string> RefreshToken(string accessToken, string refreshToken)
         {
             var user = await GetUserByToken(accessToken);
             if (user == null)
-                throw new Exception("the user wasn't found");
-           
+                throw new ModelNotFoundException("User", $"by accessToken");
+
             var savedRefreshToken = user?.RefreshToken;
-            if ( savedRefreshToken != refreshToken)
-                throw new SecurityTokenException("Invalid refresh token");
+            if (savedRefreshToken != refreshToken)
+                throw new BadRequestExeption("The refreshToken is invalid");
             var newAccessToken = CreateAccessToken(user.Username);
 
-            user.RefreshToken = RandomBase64String();
-            await _unitOfWork.SaveAsync();
-            return (newAccessToken,user.RefreshToken);
-
+            return newAccessToken;
         }
-       
+
         public void SetTokensToCookies(string accessToken, string refreshToken)
         {
             var ctx = _httpContextAccessor.HttpContext;
             ctx.Response.Cookies.Append(_configuration.GetSection("CookiesKeys")["AccessTokenKey"], accessToken,
                        new CookieOptions
                        {
-                           MaxAge = TimeSpan.FromMinutes(60)
+                           MaxAge = TimeSpan.FromMinutes(60),
                        });
             ctx.Response.Cookies.Append(_configuration.GetSection("CookiesKeys")["RefreshTokenKey"], refreshToken,
                 new CookieOptions
                 {
-                    MaxAge = TimeSpan.FromDays(1)
+                    MaxAge = TimeSpan.FromDays(1),
                 });
             ctx.Response.Headers.Add("X-Content-Type-Options", "nosniff");
             ctx.Response.Headers.Add("X-Xss-Protection", "1");
@@ -123,23 +121,43 @@ namespace BusinessLayer.Services.Implementation
                 ctx.Response.Cookies.Delete(_configuration.GetSection("CookiesKeys")["RefreshTokenKey"]);
 
         }
-        
-        //private methods
+
+        public async Task<bool> DeleteRefreshTokenFromDb()
+        {
+            (var user, var refreshToken) = await GetUserByRefreshToken();
+            if (user == null)
+            {
+                return false;
+            }
+            user.RefreshToken = "";
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
+        public async Task<bool> CheckIfLoginned(string userName)
+        {
+            (var user, var refreshToken) = await GetUserByRefreshToken();
+            return !(user == null || user.Username != userName);
+        }
+
+        // private methods
         private async Task<User?> GetUserByToken(string token)
         {
             var principal = GetPrincipalFromExpiredToken(token);
             if (principal == null)
-                throw new Exception("the principal wasn't found");
+                throw new BadRequestExeption("The principal from the token wasn't found");
 
             var username = principal.Identity.Name;
             return await _unitOfWork.Users.GetUserByNameAsync(username);
         }
+
+
         private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
             (string? tokenKey, string? issuer, string? audience) = GetConfigurationOfTokens();
             if (String.IsNullOrEmpty(tokenKey) || String.IsNullOrEmpty(issuer) || String.IsNullOrEmpty(audience))
             {
-                throw new Exception("the configuration is empty");
+                throw new BadRequestExeption("the configuration is empty");
             }
 
             var tokenValidationParameters = new TokenValidationParameters
@@ -157,10 +175,11 @@ namespace BusinessLayer.Services.Implementation
             var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
             var jwtSecurityToken = securityToken as JwtSecurityToken;
             if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                throw new SecurityTokenException("Invalid token");
+                throw new BadRequestExeption("Invalid token");
 
             return principal;
         }
+
         private string RandomBase64String()
         {
             var randomNumber = new byte[32];
@@ -170,15 +189,27 @@ namespace BusinessLayer.Services.Implementation
                 return Convert.ToBase64String(randomNumber);
             }
         }
-       
+
+        private async Task<(User?, string?)> GetUserByRefreshToken()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            var refreshToken = ctx.Request.Cookies[_configuration.GetSection("CookiesKeys")["RefreshTokenKey"]];
+            if (refreshToken == null)
+            {
+                return (null, null);
+            }
+
+            return (await _unitOfWork.Users.GetUserByRefreshTokenAsync(refreshToken), refreshToken);
+        }
+
         private (string?, string?, string) GetConfigurationOfTokens()
         {
             return (_configuration.GetSection("Jwt")["Key"], _configuration.GetSection("Jwt")["Issuer"], _configuration.GetSection("Jwt")["Audience"]);
 
         }
 
-       
 
-        
+
+
     }
 }

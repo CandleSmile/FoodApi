@@ -13,8 +13,11 @@ namespace BusinessLayer.Services.Interfaces
         string CreateAccessToken(string userName);
 
         Task<string> CreateRefreshToken(int userId);
-        Task<(string, string)> RefreshTokens(string accessToken, string refreshToken);
+        Task<string> RefreshToken(string accessToken, string refreshToken);
         void SetTokensToCookies(string accessToken, string refreshToken);
         void DeleteTokensFromCookies();
+        Task<bool> DeleteRefreshTokenFromDb();
+        Task<bool> CheckIfLoginned(string userName);
+
     }
 }

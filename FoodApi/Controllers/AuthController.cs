@@ -1,11 +1,10 @@
-﻿using BusinessLayer;
-using BusinessLayer.Contracts;
+﻿using BusinessLayer.Contracts;
 using BusinessLayer.Services.Interfaces;
 using FoodApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-
+using Utilities.ErrorHandle;
 
 namespace FoodApi.Controllers
 {
@@ -16,12 +15,11 @@ namespace FoodApi.Controllers
     public class AuthController : Controller
     {
         private IUserService _userService;
-        private IConfiguration _configuration;
         private IAuthService _authService;
-        public AuthController(IUserService userService, IConfiguration configuration, IAuthService authService)
+
+        public AuthController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
-            _configuration = configuration;
             _authService = authService;
         }
 
@@ -32,28 +30,32 @@ namespace FoodApi.Controllers
             return Ok(await _userService.GetUsersAsync());
         }
 
-       
+
         [HttpPost("Register")]
         public async Task<ActionResult<UserDto>> Register(RegistrationModel request)
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(new Error((int)ErrorCodes.NoValidData, "Registration info is not valid"));
+            }
 
             var existedUser = await _userService.GetUserByNameAsync(request.Username);
-            if (existedUser!=null) 
-                return BadRequest(new Error((int)ErrorCodes.ObjectAlreadyExists, "The user exists."));
+            if (existedUser != null)
+            {
+                return this.BadRequest(new Error((int)ErrorCodes.ObjectAlreadyExists, "The user exists."));
+            }
 
             var user = new UserDto()
             {
                 Username = request.Username,
                 Password = request.Password
-            };                       
+            };
 
             var savedUser = await _userService.AddAsync(user);
 
             return Ok(savedUser);
         }
-      
+
         [HttpPost("Login")]
         public async Task<ActionResult<string>> Login(LoginModel request)
         {
@@ -68,22 +70,35 @@ namespace FoodApi.Controllers
                 bool isValid = await _authService.VerifyPasswordHash(request.Password, userDto.Id);
                 if (!isValid)
                 {
-                    return BadRequest(new Error((int)ErrorCodes.NoValidData, "Password was wrong"));                    
+                    return BadRequest(new Error((int)ErrorCodes.NoValidData, "Password was wrong"));
                 }
                 else
                 {
                     string token = _authService.CreateAccessToken(userDto.Username);
                     string refreshToken = await _authService.CreateRefreshToken(userDto.Id);
-                    _authService.SetTokensToCookies(token, refreshToken);    
-                    return Ok(); 
+                    _authService.SetTokensToCookies(token, refreshToken);
+                    return Ok();
                 }
             }
         }
+
         [HttpPost("Logout")]
         public async Task<IActionResult> Logout()
         {
-            _authService.DeleteTokensFromCookies();
-            return Ok();
+            if (await _authService.DeleteRefreshTokenFromDb())
+            {
+                _authService.DeleteTokensFromCookies();
+                return Ok();
+            }
+
+            return BadRequest(new Error((int)ErrorCodes.NoValidData, "Problems with deleting refresh token"));
+        }
+
+
+        [HttpPost("CheckLogin")]
+        public async Task<ActionResult<bool>> CheckLogin(string userName)
+        {
+            return await _authService.CheckIfLoginned(userName);
         }
     }
 }

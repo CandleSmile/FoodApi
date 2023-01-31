@@ -4,11 +4,6 @@ using BusinessLayer.Services.Interfaces;
 using DataLayer.Items;
 using DataLayer.Repositories.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using Utilities.Helpers;
 
 namespace BusinessLayer.Services.Implementation
@@ -18,11 +13,12 @@ namespace BusinessLayer.Services.Implementation
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+
         public UserService(IUnitOfWork unitOfWork,  IMapper mapper, IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _configuration = configuration;   
+            _configuration = configuration;
         }
 
         public async Task<UserDto> AddAsync(UserDto userDto)
@@ -43,7 +39,6 @@ namespace BusinessLayer.Services.Implementation
         public async Task<IEnumerable<UserDto>> GetUsersAsync()
         {
             return _mapper.Map<IEnumerable<UserDto>>(await _unitOfWork.Users.GetAllAsync());
-        }       
-     
+        }
     }
 }

@@ -21,11 +21,19 @@ namespace BusinessLayer.Contracts
 
         public decimal Price { get; set; }
 
-        [Required]
-        public int CategoryId { get; set; }
+        //[Required]
+        //public int CategoryId { get; set; }
 
-        public int AreaId { get; set; }
+        public CategoryDto Category { get; set; }
+
+        //public int AreaId { get; set; }
+
+        public AreaDto Area { get; set; }
 
         public string? Image { get; set; }
+
+        public List<IngredientDto> Ingredients { get; set;}
+
+        public List<TagDto> Tags { get; set;}
     }
 }

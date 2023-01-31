@@ -11,6 +11,14 @@
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Linq" Version="4.3.0" />
   </ItemGroup>
 
@@ -19,6 +27,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Services\Implementation\MealService.cs">
+      <CopyToOutputDirectory>pa</CopyToOutputDirectory>
+    </Compile>
+    <Compile Update="Services\Implementation\IngredientService.cs">
+      <CopyToOutputDirectory>pa</CopyToOutputDirectory>
+    </Compile>
+    <Compile Update="Services\Implementation\CategoryService.cs">
+      <CopyToOutputDirectory>pa</CopyToOutputDirectory>
+    </Compile>
     <Compile Update="Services\Implementation\UserService.cs">
       <CopyToOutputDirectory>pa</CopyToOutputDirectory>
     </Compile>

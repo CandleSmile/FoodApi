@@ -1,50 +1,70 @@
-﻿using FoodApi.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using System.Net;
-
-namespace FoodApi.Middlewares
+﻿namespace FoodApi.Middlewares
 {
+    using System;
+    using System.Net;
+    using FoodApi.Models;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
+    using Utilities.ErrorHandle;
+
     public class ExceptionHandlerMiddleware
     {
-        private readonly RequestDelegate _next;
+        private readonly RequestDelegate next;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExceptionHandlerMiddleware"/> class.
+        /// </summary>
+        /// <param name="next"></param>
         public ExceptionHandlerMiddleware(RequestDelegate next)
         {
-            _next = next;
+            this.next = next;
         }
 
         public async Task Invoke(HttpContext context)
         {
             try
             {
-                await _next.Invoke(context);
+                await this.next.Invoke(context);
             }
             catch (Exception ex)
             {
-                await HandleExceptionMessageAsync(context, ex).ConfigureAwait(false);
+                await HandleExceptionMessageAsync(context, ex);
             }
         }
-       
+
         private static Task HandleExceptionMessageAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            //int statusCode = (int)HttpStatusCode.InternalServerError;
-            var result = JsonConvert.SerializeObject(new Error((int)ErrorCodes.UnexpectedError, exception.Message), new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });           
-            context.Response.ContentType = "application/json";
-            //context.Response.StatusCode = statusCode;
-            return context.Response.WriteAsync(result);
-        }
-    }
+            HttpStatusCode httpStatusCode = HttpStatusCode.InternalServerError;
 
-    public static class ExceptionHandlerMiddlewareExtensions
-    {
-        public static void UseExceptionHandlerMiddleware(this IApplicationBuilder app)
-        {
-            app.UseMiddleware<ExceptionHandlerMiddleware>();
+            string result = string.Empty;
+            switch (exception)
+            {
+                case ModelNotValidException validationExeption:
+                    httpStatusCode = HttpStatusCode.BadRequest;
+                    result = JsonConvert.SerializeObject(new Error((int)ErrorCodes.UnexpectedError, validationExeption.Error), new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    });
+                    break;
+                case ModelNotFoundException notFoundException:
+                    httpStatusCode = HttpStatusCode.NotFound;
+                    result = JsonConvert.SerializeObject(new Error((int)ErrorCodes.ObjectNotFound, notFoundException.Message), new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    });
+                    break;
+                default:
+                    httpStatusCode = HttpStatusCode.BadRequest;
+                    result = JsonConvert.SerializeObject(new Error((int)ErrorCodes.UnexpectedError, exception.Message), new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    });
+                    break;
+            }
+
+            context.Response.StatusCode = (int)httpStatusCode;
+            return context.Response.WriteAsync(result);
         }
     }
 }
