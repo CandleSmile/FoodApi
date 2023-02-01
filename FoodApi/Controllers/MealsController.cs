@@ -56,6 +56,7 @@
         public async Task<ActionResult<MealDto>> GetLMeal(int id)
         {
             var meal = await this.mealService.GetMealById(id);
+            meal.Image = this.PathForImages + meal.Image;
             return Ok(meal);
         }
     }

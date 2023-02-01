@@ -94,7 +94,7 @@ namespace FoodApi.Controllers
             return BadRequest(new Error((int)ErrorCodes.NoValidData, "Problems with deleting refresh token"));
         }
 
-
+       
         [HttpPost("CheckLogin")]
         public async Task<ActionResult<bool>> CheckLogin(string userName)
         {

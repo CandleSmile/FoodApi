@@ -12,8 +12,9 @@ namespace DataLayer.Repositories.Implementation
 
         public async Task<Meal?> GetMealByIdWithInfoAsync(int id)
         {
-            return await _context.Meals.Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).Include(meal => meal.Ingredients).FirstOrDefaultAsync(meal => meal.Id == id);
+            return await _context.Meals.Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).Include(meal => meal.Ingredients).FirstOrDefaultAsync(meal=>meal.Id == id);
         }
+
 
         public async Task<Meal?> GetMealByNameAsync(string name)
         {
