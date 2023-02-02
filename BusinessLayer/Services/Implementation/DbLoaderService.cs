@@ -11,43 +11,46 @@ using System.Net;
 
 namespace BusinessLayer.Services.Implementation
 {
-    public class DbLoaderService: IDbLoaderService
+    public class DbLoaderService : IDbLoaderService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-      
-     
-        public DbLoaderService(IUnitOfWork unitOfWork, IMapper mapper) { 
-            _unitOfWork= unitOfWork;
-            _mapper= mapper;
+
+
+        public DbLoaderService(IUnitOfWork unitOfWork, IMapper mapper)
+        {
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<string> LoadDb(DbLoadModel model)
         {
-            
-            try {
-                
+
+            try
+            {
+
                 //process images 
                 foreach (var item in model.Categories)
                 {
                     using (var webClient = new WebClient())
                     {
                         webClient.DownloadFile(item.Image, "Files\\images\\Categories\\" + item.Image.Replace("https://www.themealdb.com/images/category/", ""));
-                    }
-                    
+                    }                    
+
                     item.Image = item.Image.Replace("https://www.themealdb.com/images/category/", "");
                 }
 
-                foreach (var item in model.Meals) {
+                foreach (var item in model.Meals)
+                {
                     using (var webClient = new WebClient())
                     {
                         webClient.DownloadFile(item.Image, "Files\\images\\Meals\\" + item.Image.Replace("https://www.themealdb.com/images/media/meals/", ""));
                     }
 
 
-                    item.Image = item.Image.Replace("https://www.themealdb.com/images/media/meals/", "");               
+                    item.Image = item.Image.Replace("https://www.themealdb.com/images/media/meals/", "");
                 }
-            
+
                 await _unitOfWork.Categories.AddRangeAsync(_mapper.Map<List<Category>>(model.Categories));
                 await _unitOfWork.Areas.AddRangeAsync(_mapper.Map<List<Area>>(model.Areas));
                 await _unitOfWork.Ingredients.AddRangeAsync(_mapper.Map<List<Ingredient>>(model.Ingredients));
@@ -68,19 +71,19 @@ namespace BusinessLayer.Services.Implementation
                 await _unitOfWork.Tags.AddRangeAsync(tags);
                 await _unitOfWork.SaveAsync();
 
-            
+
                 //save meals with cat, ingredients, tags
                 var meals = new List<Meal>();
                 foreach (var mealDb in model.Meals)
-               
+
                 {
                     var meal = _mapper.Map<Meal>(mealDb);
                     meal.Category = await _unitOfWork.Categories.GetCategoryByNameAsync(mealDb.CategoryString);
                     meal.Area = await _unitOfWork.Areas.GetAreaByNameAsync(mealDb.AreaString);
 
                     meal.Ingredients = new List<Ingredient>();
-                    foreach(var ing in mealDb.IngredientsStrings)
-                   
+                    foreach (var ing in mealDb.IngredientsStrings)
+
                     {
                         var findIgr = await _unitOfWork.Ingredients.GetIngredientByNameAsync(ing);
                         if (findIgr != null)
@@ -92,8 +95,8 @@ namespace BusinessLayer.Services.Implementation
                     meal.Tags = new List<Tag>();
                     if (mealDb.TagStrings != null)
                     {
-                        foreach(var tag in mealDb.TagStrings)
-                      
+                        foreach (var tag in mealDb.TagStrings)
+
                         {
                             var findTag = await _unitOfWork.Tags.GetTagByNameAsync(tag);
                             if (findTag != null)
@@ -102,7 +105,7 @@ namespace BusinessLayer.Services.Implementation
                             }
                         };
                     }
-                   
+
                     meals.Add(meal);
                 };
 
@@ -110,11 +113,11 @@ namespace BusinessLayer.Services.Implementation
                 await _unitOfWork.SaveAsync();
                 return "";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ex.Message;
             }
         }
-      
+
     }
 }

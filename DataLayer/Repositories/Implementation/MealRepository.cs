@@ -24,7 +24,7 @@ namespace DataLayer.Repositories.Implementation
         public async Task<IEnumerable<Meal>?> GetMealsAsync(string? searchString, int? idCategory, IEnumerable<int>? idsIngredients)
         {
             var countIngredients = idsIngredients != null ? idsIngredients.Count() : 0;
-            IQueryable<Meal> query = _context.Meals.Include(meal => meal.Ingredients);
+            IQueryable<Meal> query = _context.Meals;
             if (!string.IsNullOrEmpty(searchString))
             {
                 query = query.Where(meal => meal.Name.Contains(searchString));
@@ -38,7 +38,7 @@ namespace DataLayer.Repositories.Implementation
             if (countIngredients > 0)
             {
                 var queryIngredients = idsIngredients?.AsQueryable();
-                var queryListMealsWithIngredients = this._context.Meals.SelectMany(meal => meal.Ingredients, (meal, ing) =>
+                var queryListMealsWithIngredients = this._context.Meals.Include(meal => meal.Ingredients).SelectMany(meal => meal.Ingredients, (meal, ing) =>
                             new
                             {
                                 MealId = meal.Id,
@@ -57,7 +57,7 @@ namespace DataLayer.Repositories.Implementation
 
         public async Task<IEnumerable<Meal>?> GetTop10MealsAsync()
         {
-            return await _context.Meals.Take(10).Include(meal => meal.Ingredients).Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).ToListAsync();
+            return await _context.Meals.Take(10).Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).ToListAsync();
         }
     }
 }

@@ -15,6 +15,9 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Utilities.ErrorHandle;
+using FoodApi.Configuration;
+using AutoMapper;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +35,9 @@ string? refreshTokenKey = builder.Configuration.GetSection("CookiesKeys")["Refre
 // get allowed-origin from Configuration
 string? origin = builder.Configuration["Allowed-origin"];
 
+//get pathes to Images
+PathToImages pathToImages = builder.Configuration.GetSection("PathToImages").Get<PathToImages>();
+
 // Add services to the container.
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddDbContext<FoodContext>(options => options.UseSqlServer(connection));
@@ -39,9 +45,11 @@ builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(AppMappingProfile));
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
-builder.Services.AddTransient<ICategoryService, CategoryService>();
+builder.Services.AddTransient<ICategoryService>(x => new CategoryService(pathToImages.ImagePath,  x.GetRequiredService<IUnitOfWork>(),
+                x.GetRequiredService<IMapper>()));
 builder.Services.AddTransient<IIngredientService, IngredientService>();
-builder.Services.AddTransient<IMealService, MealService>();
+builder.Services.AddTransient<IMealService>(x => new MealService(pathToImages.ImagePath, pathToImages.ThumbnailPath, x.GetRequiredService<IUnitOfWork>(),
+                x.GetRequiredService<IMapper>()));
 builder.Services.AddTransient<IDbLoaderService, DbLoaderService>();
 
 builder.Services.AddCors(options =>

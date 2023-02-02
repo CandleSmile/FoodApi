@@ -19,36 +19,22 @@
         /// <param name="mealService"></param>
         public MealsController(IMealService mealService)
         {
-           this.mealService = mealService;
-        }
-
-        string PathForImages {
-            get
-            {
-                return $"{this.HttpContext.Request.Scheme}://{this.HttpContext.Request.Host}{this.HttpContext.Request.PathBase}/Files/images/meals/";
-            }
+            this.mealService = mealService;
         }
 
         [HttpPost("GetMeals")]
         public async Task<ActionResult<IEnumerable<MealDto>>> GetMeals(MealsFilterParams mealsFilterParams)
         {
             var meals = await this.mealService.GetMeals(mealsFilterParams.SearchString, mealsFilterParams.CategoryId, mealsFilterParams.IdsIngredients);
-            return Ok(meals.Select(meal =>
-            {
-                meal.Image = this.PathForImages + meal.Image;
-                return meal;
-            }));
+            return Ok(meals);
         }
 
         [HttpGet("GetLatestMeals")]
         public async Task<ActionResult<IEnumerable<MealDto>>> GetLatestMeals()
         {
             var meals = await this.mealService.GetTop10MealsAsync();
-            return Ok(meals.Select(meal =>
-            {
-                meal.Image = this.PathForImages + meal.Image;
-                return meal;
-            }));
+
+            return Ok(meals);
         }
 
 
@@ -56,7 +42,6 @@
         public async Task<ActionResult<MealDto>> GetLMeal(int id)
         {
             var meal = await this.mealService.GetMealById(id);
-            meal.Image = this.PathForImages + meal.Image;
             return Ok(meal);
         }
     }

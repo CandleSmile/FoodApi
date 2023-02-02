@@ -23,23 +23,11 @@
             this.categoryService = categoryService;
         }
 
-        private string PathForImages
-        {
-            get
-            {
-                return $"{this.HttpContext.Request.Scheme}://{this.HttpContext.Request.Host}{this.HttpContext.Request.PathBase}/Files/images/categories/";
-            }
-        }
-
         [HttpGet("GetCategories")]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
             var categories = await categoryService.GetCategoriesAsync();
-            return Ok(categories.Select(meal =>
-            {
-                meal.Image = this.PathForImages + meal.Image;
-                return meal;
-            }));
+            return Ok(categories);
         }
     }
 }
