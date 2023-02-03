@@ -1,10 +1,9 @@
 ﻿namespace FoodApi.Middlewares
 {
-    using System;
-    using System.Net;
-    using FoodApi.Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
+    using System;
+    using System.Net;
     using Utilities.ErrorHandle;
 
     public class ExceptionHandlerMiddleware
@@ -35,21 +34,21 @@
         private static Task HandleExceptionMessageAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            HttpStatusCode httpStatusCode = HttpStatusCode.InternalServerError;
+            var result = string.Empty;
 
-            string result = string.Empty;
+            HttpStatusCode httpStatusCode = HttpStatusCode.InternalServerError;
             switch (exception)
             {
-                case ModelNotValidException validationExeption:
+                case BadRequestExeption validationExeption:
                     httpStatusCode = HttpStatusCode.BadRequest;
-                    result = JsonConvert.SerializeObject(new Error((int)ErrorCodes.UnexpectedError, validationExeption.Error), new JsonSerializerSettings
+                    result = JsonConvert.SerializeObject(new Error(validationExeption.ErrorCode, validationExeption.Message), new JsonSerializerSettings
                     {
                         ContractResolver = new CamelCasePropertyNamesContractResolver(),
                     });
                     break;
-                case ModelNotFoundException notFoundException:
+                case NotFoundException notFoundException:
                     httpStatusCode = HttpStatusCode.NotFound;
-                    result = JsonConvert.SerializeObject(new Error((int)ErrorCodes.ObjectNotFound, notFoundException.Message), new JsonSerializerSettings
+                    result = JsonConvert.SerializeObject(new Error(notFoundException.ErrorCode, notFoundException.Message), new JsonSerializerSettings
                     {
                         ContractResolver = new CamelCasePropertyNamesContractResolver(),
                     });

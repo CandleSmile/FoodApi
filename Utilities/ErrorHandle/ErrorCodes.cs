@@ -1,4 +1,4 @@
-﻿namespace FoodApi.Models
+﻿namespace Utilities.ErrorHandle
 {
     public enum ErrorCodes
     {

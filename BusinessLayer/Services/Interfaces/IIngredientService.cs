@@ -1,4 +1,4 @@
-﻿using BusinessLayer.Contracts;
+﻿using BusinessLayer.Dto;
 using System.Security.Claims;
 
 namespace BusinessLayer.Services.Interfaces

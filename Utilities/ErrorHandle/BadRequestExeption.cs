@@ -1,10 +1,11 @@
 ﻿namespace Utilities.ErrorHandle
 {
-    public class BadRequestExeption : ApplicationException
+    public class BadRequestExeption : BaseException
     {
-        public BadRequestExeption(string error) : base(error)
-        {
 
+        public BadRequestExeption(int errorCode, string error)
+            : base(errorCode, error)
+        {
         }
     }
 }

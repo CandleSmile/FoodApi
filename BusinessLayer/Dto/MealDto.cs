@@ -1,16 +1,10 @@
-﻿using DataLayer.Items;
-using System;
-using System.Collections.Generic;
+﻿using BusinessLayer.DTto;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BusinessLayer.Contracts
+namespace BusinessLayer.Dto
 {
     public class MealDto
     {
-     
         public int Id { get; set; }
 
         [Required]
@@ -32,8 +26,8 @@ namespace BusinessLayer.Contracts
 
         public string? Image { get; set; }
 
-        public List<IngredientDto> Ingredients { get; set;}
+        public List<IngredientDto> Ingredients { get; set; }
 
-        public List<TagDto> Tags { get; set;}
+        public List<TagDto> Tags { get; set; }
     }
 }

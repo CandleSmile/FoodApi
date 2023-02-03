@@ -1,16 +1,8 @@
-﻿using AutoMapper;
-using BusinessLayer.Contracts;
-using BusinessLayer.Contracts.DBLoad;
-using BusinessLayer.Services.Implementation;
+﻿using BusinessLayer.Dto.DBLoad;
 using BusinessLayer.Services.Interfaces;
-using FoodApi.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Utilities.ErrorHandle;
-using Utilities.Helpers;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Drive.v3;
-using Google.Apis.Services;
 
 
 //to delete
@@ -29,7 +21,8 @@ namespace FoodApi.Controllers
         }
 
         [HttpPost("LoadDb")]
-        public async Task<ActionResult<string>> LoadDb(DbLoadModel model) {
+        public async Task<ActionResult<string>> LoadDb(DbLoadModel model)
+        {
             if (ModelState.IsValid)
             {
                 return await _dbLoaderService.LoadDb(model);

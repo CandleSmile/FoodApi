@@ -2,7 +2,7 @@
 
 namespace FoodApi.Models
 {
-    public class LoginModel
+    public class LoginDto
     {
         [Required]
         [EmailAddress]

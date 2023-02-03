@@ -1,14 +1,11 @@
 ﻿namespace BusinessLayer.Services.Implementation
 {
     using AutoMapper;
-    using BusinessLayer.Contracts;
-    using BusinessLayer.Contracts.DBLoad;
+    using BusinessLayer.Dto;
     using BusinessLayer.Services.Interfaces;
+    using BusinessLayer.Validators;
     using DataLayer.Repositories.Interfaces;
-    using Microsoft.EntityFrameworkCore.Metadata.Internal;
-    using Microsoft.Extensions.Configuration;
-    using Utilities.ErrorHandle;
-    using static Google.Apis.Drive.v3.Data.File.ContentHintsData;
+    using FoodApi.Models;
 
     public class MealService : IMealService
     {
@@ -16,6 +13,7 @@
         private readonly IMapper _mapper;
         private readonly string _imagePath;
         private readonly string _thumbnailPath;
+        private readonly InputValidator _inputValidator = new InputValidator();
         /// <summary>
         /// Initializes a new instance of the <see cref="MealService"/> class.
         /// </summary>
@@ -25,7 +23,7 @@
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-          
+
             _imagePath = imagePath;
             _thumbnailPath = thumbnailPath;
         }
@@ -33,20 +31,17 @@
         public async Task<MealDto> GetMealById(int id)
         {
             var meal = await _unitOfWork.Meals.GetMealByIdWithInfoAsync(id);
-            if (meal == null)
-            {
-                throw new ModelNotFoundException("Meal", "$id {id}");
-            }
+            _inputValidator.ValidateIsNotNull(meal, "The meal wasn't found");
 
             var mealDto = _mapper.Map<MealDto>(meal);
             mealDto.Image = _thumbnailPath + mealDto.Image;
             return mealDto;
         }
 
-        public async Task<IEnumerable<MealDto>> GetMeals(string? searchString, int? idCategory, IEnumerable<int>? idsIngredients)
+        public async Task<IEnumerable<MealDto>> GetMeals(MealsFilterParams mealsFilterParams)
         {
-            var meals = await _unitOfWork.Meals.GetMealsAsync(searchString, idCategory, idsIngredients);
-            var mealsDto = _mapper.Map<IEnumerable<MealDto>>(await _unitOfWork.Meals.GetMealsAsync(searchString, idCategory, idsIngredients));
+            var meals = await _unitOfWork.Meals.GetMealsAsync(mealsFilterParams.SearchString, mealsFilterParams.CategoryId, mealsFilterParams.IngredientIds);
+            var mealsDto = _mapper.Map<IEnumerable<MealDto>>(meals);
             foreach (var meal in mealsDto)
             {
                 meal.Image = _imagePath + meal.Image;

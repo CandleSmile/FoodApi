@@ -1,5 +1,4 @@
-﻿
-namespace Utilities.ErrorHandle
+﻿namespace Utilities.ErrorHandle
 {
     public class Error
     {

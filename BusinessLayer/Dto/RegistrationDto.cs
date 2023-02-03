@@ -1,11 +1,9 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-
-namespace FoodApi.Models
+namespace BusinessLayer.Dto
 {
-    public  class RegistrationModel
-    {     
+    public class RegistrationDto
+    {
 
         [Required]
         [EmailAddress]
@@ -19,6 +17,5 @@ namespace FoodApi.Models
         [StringLength(255, ErrorMessage = "Must be between 6 and 16 characters", MinimumLength = 6)]
         [Compare("Password")]
         public string PasswordConfirmation { get; set; }
-     
     }
 }

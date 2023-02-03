@@ -1,16 +1,19 @@
 ﻿namespace BusinessLayer.Services.Implementation
 {
+    using AutoMapper;
+    using BusinessLayer.Dto;
+    using BusinessLayer.Services.Interfaces;
+    using BusinessLayer.Validators;
+    using DataLayer.Items;
+    using DataLayer.Repositories.Interfaces;
+    using FoodApi.Models;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.IdentityModel.Tokens;
     using System.IdentityModel.Tokens.Jwt;
     using System.Security.Claims;
     using System.Security.Cryptography;
     using System.Text;
-    using AutoMapper;
-    using BusinessLayer.Services.Interfaces;
-    using DataLayer.Items;
-    using DataLayer.Repositories.Interfaces;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.IdentityModel.Tokens;
     using Utilities.ErrorHandle;
     using Utilities.Helpers;
 
@@ -20,6 +23,7 @@
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly InputValidator _inputValidator = new InputValidator();
 
         public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
@@ -29,14 +33,35 @@
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<bool> VerifyPasswordHash(string password, int userId)
+        public async Task<UserDto> RegisterAsync(RegistrationDto userDto)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            if (user == null)
-            {
-                throw new ModelNotFoundException("User", $"with {userId}");
-            }
+            var validator = new RegistrationDtoValidator(userDto, _unitOfWork);
+            await validator.ValidateModel();
+            var user = _mapper.Map<User>(userDto);
+            (user.PasswordSalt, user.PasswordHash) = HashHelper.CreatePasswordHash(userDto.Password);
+            await _unitOfWork.Users.AddAsync(user);
+            await _unitOfWork.SaveAsync();
+            return _mapper.Map<UserDto>(user);
+        }
 
+        public async Task<bool> LoginUserAsync(LoginDto login)
+        {
+            var validator = new LoginDtoValidator(login);
+            validator.Valid();
+
+            var user = await _unitOfWork.Users.GetUserByNameAsync(login.Username);
+            _inputValidator.ValidateIsNotNull(user, "the user doesn't exist");
+
+            validator.ValidatePassword(user.PasswordSalt, user.PasswordHash);
+
+            string token = CreateAccessToken(user.Username);
+            string refreshToken = await CreateRefreshToken(user.Id);
+            SetTokensToCookies(token, refreshToken);
+            return true;
+        }
+
+        private async Task<bool> VerifyPasswordHash(string password, User user)
+        {
             return HashHelper.VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash);
         }
 
@@ -46,13 +71,15 @@
             {
                 new Claim(ClaimTypes.Name, userName)
             };
+
             (string? tokenKey, string? issuer, string? audience) = GetConfigurationOfTokens();
-            if (String.IsNullOrEmpty(tokenKey) || String.IsNullOrEmpty(issuer) || String.IsNullOrEmpty(audience))
+
+            if (string.IsNullOrEmpty(tokenKey) || string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
             {
-                throw new BadRequestExeption("The configuration is empty");
+                throw new BadRequestExeption((int)ErrorCodes.NoValidData, "The configuration is empty");
             }
 
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(tokenKey ?? ""));
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(tokenKey ?? string.Empty));
             var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
@@ -72,8 +99,8 @@
         public async Task<string> CreateRefreshToken(int userId)
         {
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            if (user == null)
-                throw new ModelNotFoundException("User", $"with {userId}");
+            _inputValidator.ValidateIsNotNull(user, "the user doesn't exist");
+
             user.RefreshToken = RandomBase64String();
             await _unitOfWork.SaveAsync();
             return user.RefreshToken;
@@ -82,12 +109,8 @@
         public async Task<string> RefreshToken(string accessToken, string refreshToken)
         {
             var user = await GetUserByToken(accessToken);
-            if (user == null)
-                throw new ModelNotFoundException("User", $"by accessToken");
-
-            var savedRefreshToken = user?.RefreshToken;
-            if (savedRefreshToken != refreshToken)
-                throw new BadRequestExeption("The refreshToken is invalid");
+            _inputValidator.ValidateIsNotNull(user, "can't get user by access token");
+            _inputValidator.ValidateShouldBeEqual(user.RefreshToken, refreshToken, "The refreshToken is invalid", (int)ErrorCodes.NotValidRefreshToken);
             var newAccessToken = CreateAccessToken(user.Username);
 
             return newAccessToken;
@@ -145,7 +168,7 @@
         {
             var principal = GetPrincipalFromExpiredToken(token);
             if (principal == null)
-                throw new BadRequestExeption("The principal from the token wasn't found");
+                throw new BadRequestExeption((int)ErrorCodes.ObjectNotFound, "The principal from the token wasn't found");
 
             var username = principal.Identity.Name;
             return await _unitOfWork.Users.GetUserByNameAsync(username);
@@ -157,7 +180,7 @@
             (string? tokenKey, string? issuer, string? audience) = GetConfigurationOfTokens();
             if (String.IsNullOrEmpty(tokenKey) || String.IsNullOrEmpty(issuer) || String.IsNullOrEmpty(audience))
             {
-                throw new BadRequestExeption("the configuration is empty");
+                throw new BadRequestExeption((int)ErrorCodes.NoValidData, "the configuration is empty");
             }
 
             var tokenValidationParameters = new TokenValidationParameters
@@ -175,7 +198,7 @@
             var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
             var jwtSecurityToken = securityToken as JwtSecurityToken;
             if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                throw new BadRequestExeption("Invalid token");
+                throw new BadRequestExeption((int)ErrorCodes.NoValidData, "Invalid token");
 
             return principal;
         }

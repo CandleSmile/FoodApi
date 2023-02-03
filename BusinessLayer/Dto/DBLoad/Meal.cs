@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace BusinessLayer.Contracts.DBLoad
+namespace BusinessLayer.Dto.DBLoad
 {
     public class MealDb
     {

@@ -6,6 +6,6 @@
 
         public int? CategoryId { get; set; }
 
-        public List<int>? IdsIngredients { get; set; }
+        public List<int>? IngredientIds { get; set; }
     }
 }

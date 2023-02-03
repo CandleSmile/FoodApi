@@ -1,4 +1,4 @@
-﻿using BusinessLayer.Contracts.DBLoad;
+﻿using BusinessLayer.Dto.DBLoad;
 
 //to delete
 namespace BusinessLayer.Services.Interfaces

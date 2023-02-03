@@ -1,12 +1,12 @@
-using System.Text;
+using AutoMapper;
 using BusinessLayer;
 using BusinessLayer.Services.Implementation;
 using BusinessLayer.Services.Interfaces;
 using DataLayer;
 using DataLayer.Repositories.Implementation;
 using DataLayer.Repositories.Interfaces;
+using FoodApi.Configuration;
 using FoodApi.Middlewares;
-using FoodApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +14,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Text;
 using Utilities.ErrorHandle;
-using FoodApi.Configuration;
-using AutoMapper;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,11 +43,12 @@ builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(AppMappingProfile));
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
-builder.Services.AddTransient<ICategoryService>(x => new CategoryService(pathToImages.ImagePath,  x.GetRequiredService<IUnitOfWork>(),
+builder.Services.AddTransient<ICategoryService>(x => new CategoryService(pathToImages.ImagePath, x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<IMapper>()));
 builder.Services.AddTransient<IIngredientService, IngredientService>();
 builder.Services.AddTransient<IMealService>(x => new MealService(pathToImages.ImagePath, pathToImages.ThumbnailPath, x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<IMapper>()));
+builder.Services.AddTransient<IOrderService, OrderService>();
 builder.Services.AddTransient<IDbLoaderService, DbLoaderService>();
 
 builder.Services.AddCors(options =>
@@ -58,7 +57,7 @@ builder.Services.AddCors(options =>
         name: "AllowFoodApp",
         policy =>
                       {
-                      if (!string.IsNullOrEmpty(origin))
+                          if (!string.IsNullOrEmpty(origin))
                           {
                               policy.WithOrigins(origin.Split(',')).AllowCredentials().AllowAnyMethod().AllowAnyHeader();
                           }
@@ -134,12 +133,20 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+
+// Enable middleware to serve generated Swagger as a JSON endpoint.
+app.UseSwagger(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.RouteTemplate = "swagger/{documentName}/swagger.json";
+});
+
+// Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+// specifying the Swagger JSON endpoint.
+app.UseSwaggerUI(c =>
+{
+    c.RoutePrefix = "swagger";
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+});
 
 app.UseHttpsRedirection();
 app.UseFileServer(new FileServerOptions

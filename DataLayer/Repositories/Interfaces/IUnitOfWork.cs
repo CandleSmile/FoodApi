@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DataLayer.Repositories.Interfaces
+﻿namespace DataLayer.Repositories.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
@@ -14,6 +8,7 @@ namespace DataLayer.Repositories.Interfaces
         ITagRepository Tags { get; }
         ICategoryRepository Categories { get; }
         IAreaRepository Areas { get; }
+        IOrderRepository Orders { get; }
         Task<int> SaveAsync();
     }
 }

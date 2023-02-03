@@ -28,6 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Services\Implementation\OrderService.cs">
+      <CopyToOutputDirectory>pa</CopyToOutputDirectory>
+    </Compile>
     <Compile Update="Services\Implementation\MealService.cs">
       <CopyToOutputDirectory>pa</CopyToOutputDirectory>
     </Compile>

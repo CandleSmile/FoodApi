@@ -1,9 +1,8 @@
 ﻿using AutoMapper;
-using BusinessLayer.Contracts.DBLoad;
+using BusinessLayer.Dto.DBLoad;
 using BusinessLayer.Services.Interfaces;
 using DataLayer.Items;
 using DataLayer.Repositories.Interfaces;
-using Microsoft.AspNetCore.Http;
 using System.Net;
 
 // To delete
@@ -35,7 +34,7 @@ namespace BusinessLayer.Services.Implementation
                     using (var webClient = new WebClient())
                     {
                         webClient.DownloadFile(item.Image, "Files\\images\\Categories\\" + item.Image.Replace("https://www.themealdb.com/images/category/", ""));
-                    }                    
+                    }
 
                     item.Image = item.Image.Replace("https://www.themealdb.com/images/category/", "");
                 }

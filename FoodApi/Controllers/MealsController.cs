@@ -1,6 +1,6 @@
 ﻿namespace FoodApi.Controllers
 {
-    using BusinessLayer.Contracts;
+    using BusinessLayer.Dto;
     using BusinessLayer.Services.Interfaces;
     using FoodApi.Models;
     using Microsoft.AspNetCore.Cors;
@@ -25,7 +25,7 @@
         [HttpPost("GetMeals")]
         public async Task<ActionResult<IEnumerable<MealDto>>> GetMeals(MealsFilterParams mealsFilterParams)
         {
-            var meals = await this.mealService.GetMeals(mealsFilterParams.SearchString, mealsFilterParams.CategoryId, mealsFilterParams.IdsIngredients);
+            var meals = await this.mealService.GetMeals(mealsFilterParams);
             return Ok(meals);
         }
 

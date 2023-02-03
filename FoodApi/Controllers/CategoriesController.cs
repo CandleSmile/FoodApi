@@ -1,9 +1,7 @@
 ﻿namespace FoodApi.Controllers
 {
-    using BusinessLayer.Contracts;
-    using BusinessLayer.Services.Implementation;
+    using BusinessLayer.Dto;
     using BusinessLayer.Services.Interfaces;
-    using FoodApi.Models;
     using Microsoft.AspNetCore.Cors;
     using Microsoft.AspNetCore.Mvc;
 

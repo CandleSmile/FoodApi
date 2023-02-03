@@ -1,16 +1,14 @@
 ﻿namespace FoodApi.Controllers
 {
-    using BusinessLayer.Contracts;
-    using BusinessLayer.Services.Implementation;
+    using BusinessLayer.Dto;
     using BusinessLayer.Services.Interfaces;
-    using FoodApi.Models;
     using Microsoft.AspNetCore.Cors;
     using Microsoft.AspNetCore.Mvc;
 
     [Route("api/[controller]")]
     [ApiController]
     [EnableCors("AllowFoodApp")]
-    public class IngredientsController: ControllerBase
+    public class IngredientsController : ControllerBase
     {
         private readonly IIngredientService ingredientService;
 

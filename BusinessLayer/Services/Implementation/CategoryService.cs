@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using BusinessLayer.Contracts;
+using BusinessLayer.Dto;
 using BusinessLayer.Services.Interfaces;
 using DataLayer.Repositories.Interfaces;
 
