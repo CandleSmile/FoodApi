@@ -90,31 +90,44 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
         options.Events = new JwtBearerEvents
         {
-            OnAuthenticationFailed = async (context) =>
+            OnAuthenticationFailed = (context) =>
             {
                 if (context.Exception.GetType() == typeof(SecurityTokenExpiredException) && !string.IsNullOrEmpty(accessTokenKey) && !string.IsNullOrEmpty(refreshTokenKey))
                 {
                     try
                     {
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/json";
-                        var authService = context.HttpContext.RequestServices
-                        .GetRequiredService<IAuthService>();
-
-                        string token = context.HttpContext.Request.Cookies[accessTokenKey];
-                        string refreshToken = context.HttpContext.Request.Cookies[refreshTokenKey];
-                        var newJwtToken = await authService.RefreshToken(accessToken: token ?? string.Empty, refreshToken: refreshToken ?? string.Empty);
-
-                        context.HttpContext.Response.Cookies.Append(accessTokenKey, newJwtToken,
-                           new CookieOptions
-                           {
-                               MaxAge = TimeSpan.FromMinutes(60),
-                           });
-
-                        await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new Error((int)ErrorCodes.TokenWasRefreshed, "Token was refreshed"), new JsonSerializerSettings
+                        context.Response.OnStarting(async () =>
                         {
-                            ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                        }));
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.Response.ContentType = "application/json";
+                            var authService = context.HttpContext.RequestServices
+                            .GetRequiredService<IAuthService>();
+
+                            string token = context.HttpContext.Request.Cookies[accessTokenKey];
+                            string refreshToken = context.HttpContext.Request.Cookies[refreshTokenKey];
+                            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
+                            {
+                                await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new Error((int)ErrorCodes.LoginExpired, "Token can't be refreshed"), new JsonSerializerSettings
+                                {
+                                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                                }));
+                            }
+                            else
+                            {
+                                var newJwtToken = await authService.RefreshToken(accessToken: token, refreshToken: refreshToken);
+
+                                context.HttpContext.Response.Cookies.Append(accessTokenKey, newJwtToken,
+                                   new CookieOptions
+                                   {
+                                       MaxAge = TimeSpan.FromMinutes(60),
+                                   });
+
+                                await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new Error((int)ErrorCodes.TokenWasRefreshed, "Token was refreshed"), new JsonSerializerSettings
+                                {
+                                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                                }));
+                            }
+                        });
                     }
                     catch (Exception ex)
                     {
@@ -124,6 +137,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         });
                     }
                 }
+
+                return Task.CompletedTask;
             },
         };
     });

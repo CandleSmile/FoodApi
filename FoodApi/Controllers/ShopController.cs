@@ -29,11 +29,10 @@ namespace FoodApi.Controllers
         }
 
         [HttpGet("GetOrders")]
-        public async Task<ActionResult<OrderDto>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrders()
         {
-            var order = await _orderService.GetOrdersByUserAsync();
-
-            return Ok(order);
+            var orders = await _orderService.GetOrdersByUserAsync();
+            return Ok(orders);
         }
     }
 }

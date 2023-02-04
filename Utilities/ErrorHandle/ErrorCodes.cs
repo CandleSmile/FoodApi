@@ -9,5 +9,6 @@
         UnexpectedError = 5,
         TokenWasRefreshed = 6,
         ErrorOnRefreshToken = 7,
+        LoginExpired = 8
     };
 }
