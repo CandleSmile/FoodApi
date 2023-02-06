@@ -37,6 +37,5 @@
   <ItemGroup>
     <Folder Include="Files\images\Categories\" />
     <Folder Include="Files\images\Meals\" />
-    <Folder Include="Models\" />
   </ItemGroup>
 </Project>

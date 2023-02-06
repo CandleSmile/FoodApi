@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace DataLayer.Items
 {
     public class User
     {
         [Key]
-        [Required]
         public int Id { get; set; }
 
         [Required]
@@ -22,10 +14,8 @@ namespace DataLayer.Items
         public byte[]? PasswordHash { get; set; }
 
         [Required]
-        public byte[]? PasswordSalt { get; set; }    
-        
+        public byte[]? PasswordSalt { get; set; }
+
         public string? RefreshToken { get; set; }
-
-
     }
 }

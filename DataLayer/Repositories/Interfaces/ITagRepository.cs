@@ -2,7 +2,7 @@
 
 namespace DataLayer.Repositories.Interfaces
 {
-    public interface ITagRepository:IBaseRepository<Tag>
+    public interface ITagRepository : IBaseRepository<Tag>
     {
         Task<Tag?> GetTagByNameAsync(string name);
     }

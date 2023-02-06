@@ -23,20 +23,14 @@ namespace DataLayer.Repositories.Implementation
             return await _context.Set<T>().ToListAsync();
         }
 
-        public async  Task AddAsync(T entity)
+        public async Task AddAsync(T entity)
         {
-           await  _context.Set<T>().AddAsync(entity);
+            await _context.Set<T>().AddAsync(entity);
         }
 
         public async Task RemoveAsync(int id)
         {
             var entity = await GetByIdAsync(id);
-
-            if (entity is null)
-            {
-                throw new Exception($"Object with  {id} is not found.");
-            }
-
             this._context.Set<T>().Remove(entity);
         }
 
@@ -44,6 +38,5 @@ namespace DataLayer.Repositories.Implementation
         {
             await _context.Set<T>().AddRangeAsync(entities);
         }
-
     }
 }

@@ -8,6 +8,7 @@ namespace BusinessLayer.Dto.DBLoad
         [JsonPropertyName("strIngredient")]
         [Required]
         public string? Name { get; set; }
+
         [JsonPropertyName("strDescription")]
         public string? Description { get; set; }
     }

@@ -11,7 +11,5 @@ namespace BusinessLayer.Validators
         {
             _unitOfWork = unitOfWork;
         }
-
-
     }
 }

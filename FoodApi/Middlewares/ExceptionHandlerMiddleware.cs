@@ -1,11 +1,10 @@
-﻿namespace FoodApi.Middlewares
-{
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
-    using System;
-    using System.Net;
-    using Utilities.ErrorHandle;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.Net;
+using Utilities.ErrorHandle;
 
+namespace FoodApi.Middlewares
+{
     public class ExceptionHandlerMiddleware
     {
         private readonly RequestDelegate next;

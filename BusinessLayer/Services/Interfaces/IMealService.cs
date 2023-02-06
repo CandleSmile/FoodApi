@@ -1,5 +1,4 @@
 ﻿using BusinessLayer.Dto;
-using FoodApi.Models;
 
 namespace BusinessLayer.Services.Interfaces
 {
@@ -10,6 +9,5 @@ namespace BusinessLayer.Services.Interfaces
         Task<IEnumerable<MealDto>> GetMeals(MealsFilterParams mealsFilterParams);
 
         Task<MealDto> GetMealById(int id);
-
     }
 }

@@ -2,7 +2,6 @@
 using BusinessLayer.Dto;
 using BusinessLayer.Services.Interfaces;
 using DataLayer.Repositories.Interfaces;
-using Microsoft.Extensions.Configuration;
 
 namespace BusinessLayer.Services.Implementation
 {
@@ -10,16 +9,12 @@ namespace BusinessLayer.Services.Implementation
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        private readonly IConfiguration _configuration;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _configuration = configuration;
         }
-
-
 
         public async Task<UserDto?> GetUserByNameAsync(string userName)
         {

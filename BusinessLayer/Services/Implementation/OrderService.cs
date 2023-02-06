@@ -15,6 +15,7 @@
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly InputValidator _inputValidator = new InputValidator();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MealService"/> class.
         /// </summary>

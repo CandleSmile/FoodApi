@@ -1,5 +1,4 @@
-﻿using BusinessLayer.DTto;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace BusinessLayer.Dto
 {
@@ -15,12 +14,7 @@ namespace BusinessLayer.Dto
 
         public decimal Price { get; set; }
 
-        //[Required]
-        //public int CategoryId { get; set; }
-
         public CategoryDto Category { get; set; }
-
-        //public int AreaId { get; set; }
 
         public AreaDto Area { get; set; }
 

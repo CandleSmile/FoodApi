@@ -19,12 +19,10 @@ namespace FoodApi.Controllers
             _orderService = orderService;
         }
 
-
         [HttpPost("MakeOrder")]
         public async Task<ActionResult<OrderDto>> MakeOrder(CartDto cart)
         {
             var order = await _orderService.MakeOrderAsync(cart);
-
             return Ok(order);
         }
 

@@ -1,4 +1,4 @@
-﻿namespace FoodApi.Models
+﻿namespace BusinessLayer.Dto
 {
     public class MealsFilterParams
     {

@@ -5,7 +5,6 @@
     using BusinessLayer.Services.Interfaces;
     using BusinessLayer.Validators;
     using DataLayer.Repositories.Interfaces;
-    using FoodApi.Models;
 
     public class MealService : IMealService
     {
@@ -23,7 +22,6 @@
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-
             _imagePath = imagePath;
             _thumbnailPath = thumbnailPath;
         }
@@ -48,7 +46,6 @@
             }
 
             return mealsDto;
-
         }
 
         public async Task<IEnumerable<MealDto>> GetTop10MealsAsync()

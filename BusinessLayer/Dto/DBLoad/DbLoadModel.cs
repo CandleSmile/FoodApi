@@ -2,11 +2,9 @@
 using System.Text.Json.Serialization;
 
 namespace BusinessLayer.Dto.DBLoad
-
 {
     public class DbLoadModel
     {
-        
         [JsonPropertyName("categories")]
         [Required]
         public List<CategoryDb>? Categories { get; set; }
@@ -19,10 +17,8 @@ namespace BusinessLayer.Dto.DBLoad
         [Required]
         public List<IngredientDb>? Ingredients { get; set; }
 
-
         [JsonPropertyName("meals")]
         [Required]
         public List<MealDb>? Meals { get; set; }
-
     }
 }

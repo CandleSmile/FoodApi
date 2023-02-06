@@ -21,7 +21,6 @@
             this.ingredientService = ingredientService;
         }
 
-
         [HttpGet("GetIngredients")]
         public async Task<ActionResult<IEnumerable<IngredientDto>>> GetIngredients()
         {

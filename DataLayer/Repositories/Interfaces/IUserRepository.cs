@@ -1,13 +1,8 @@
 ﻿using DataLayer.Items;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataLayer.Repositories.Interfaces
 {
-    public interface IUserRepository: IBaseRepository<User>
+    public interface IUserRepository : IBaseRepository<User>
     {
         Task<User?> GetUserByNameAsync(string username);
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);

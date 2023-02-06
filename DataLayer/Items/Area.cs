@@ -1,12 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-
-namespace DataLayer.Items
+﻿namespace DataLayer.Items
 {
+    using System.ComponentModel.DataAnnotations;
+
     public class Area
     {
         [Key]
-        [Required]
         public int Id { get; set; }
 
         [Required]

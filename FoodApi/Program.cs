@@ -6,35 +6,31 @@ using DataLayer;
 using DataLayer.Repositories.Implementation;
 using DataLayer.Repositories.Interfaces;
 using FoodApi.Configuration;
+using FoodApi.JWTBearEvents;
 using FoodApi.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System.Text;
-using Utilities.ErrorHandle;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string? connection = builder.Configuration.GetConnectionString("DefaultConnection");
+AppSettings settings = builder.Configuration.Get<AppSettings>();
+
+string? connection = settings.ConnectionString;
 
 // get data for tokens from Configuration
-string? tokenKey = builder.Configuration.GetSection("Jwt")["Key"];
-string? issuer = builder.Configuration.GetSection("Jwt")["Issuer"];
-string? audience = builder.Configuration.GetSection("Jwt")["Audience"];
-
-// get data for token cookies keys from Configuration
-string? accessTokenKey = builder.Configuration.GetSection("CookiesKeys")["AccessTokenKey"];
-string? refreshTokenKey = builder.Configuration.GetSection("CookiesKeys")["RefreshTokenKey"];
+string? tokenKey = settings.Jwt.Key;
+string? issuer = settings.Jwt.Issuer;
+string? audience = settings.Jwt.Audience;
 
 // get allowed-origin from Configuration
-string? origin = builder.Configuration["Allowed-origin"];
+string? origin = settings.AllowedOriginUrl;
 
 //get pathes to Images
-PathToImages pathToImages = builder.Configuration.GetSection("PathToImages").Get<PathToImages>();
+PathToImages pathToImages = settings.PathToImages;
 
 // Add services to the container.
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -42,7 +38,8 @@ builder.Services.AddDbContext<FoodContext>(options => options.UseSqlServer(conne
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(AppMappingProfile));
 builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<IAuthService, AuthService>();
+builder.Services.AddTransient<IAuthService>(x => new AuthService(x.GetRequiredService<IUnitOfWork>(), x.GetRequiredService<IMapper>(),
+    x.GetRequiredService<IConfiguration>(), x.GetRequiredService<IHttpContextAccessor>(), TokenConstants.CookiesAccessTokenKey, TokenConstants.CookiesRefreshTokenKey));
 builder.Services.AddTransient<ICategoryService>(x => new CategoryService(pathToImages.ImagePath, x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<IMapper>()));
 builder.Services.AddTransient<IIngredientService, IngredientService>();
@@ -50,6 +47,9 @@ builder.Services.AddTransient<IMealService>(x => new MealService(pathToImages.Im
                 x.GetRequiredService<IMapper>()));
 builder.Services.AddTransient<IOrderService, OrderService>();
 builder.Services.AddTransient<IDbLoaderService, DbLoaderService>();
+builder.Services.Configure<AppSettings>(builder.Configuration);
+builder.Services.Configure<PathToImages>(builder.Configuration.GetSection("PathToImages"));
+builder.Services.AddScoped<CreationAccessTokenByRefreshToken>();
 
 builder.Services.AddCors(options =>
 {
@@ -88,65 +88,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero,
         };
-        options.Events = new JwtBearerEvents
-        {
-            OnChallenge = async (context) =>
-            {
-                context.HandleResponse();
-
-                // AuthenticateFailure property contains 
-                // the details about why the authentication has failed
-                try
-                {
-                    if (context.AuthenticateFailure != null && context.AuthenticateFailure.GetType() == typeof(SecurityTokenExpiredException) && !string.IsNullOrEmpty(accessTokenKey) && !string.IsNullOrEmpty(refreshTokenKey))
-                    {
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/json";
-                        var authService = context.HttpContext.RequestServices
-                        .GetRequiredService<IAuthService>();
-
-                        string token = context.HttpContext.Request.Cookies[accessTokenKey];
-                        string refreshToken = context.HttpContext.Request.Cookies[refreshTokenKey];
-                        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
-                        {
-                            await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new Error((int)ErrorCodes.LoginExpired, "Token can't be refreshed"), new JsonSerializerSettings
-                            {
-                                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                            }));
-                        }
-                        else
-                        {
-                            var newJwtToken = await authService.RefreshToken(accessToken: token, refreshToken: refreshToken);
-
-                            context.HttpContext.Response.Cookies.Append(accessTokenKey, newJwtToken,
-                               new CookieOptions
-                               {
-                                   MaxAge = TimeSpan.FromMinutes(60),
-                               });
-
-                            await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new Error((int)ErrorCodes.TokenWasRefreshed, "Token was refreshed"), new JsonSerializerSettings
-                            {
-                                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                            }));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    JsonConvert.SerializeObject(new Error((int)ErrorCodes.ErrorOnRefreshToken, ex.Message), new JsonSerializerSettings
-                    {
-                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                    });
-                }
-            },
-        };
+        options.EventsType = typeof(CreationAccessTokenByRefreshToken);
     });
 
 // swagger authorization
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
 
 // Enable middleware to serve generated Swagger as a JSON endpoint.
 app.UseSwagger(c =>

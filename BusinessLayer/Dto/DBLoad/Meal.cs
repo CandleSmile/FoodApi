@@ -42,7 +42,7 @@ namespace BusinessLayer.Dto.DBLoad
         public Category? Category { get; set; }
 
         [JsonIgnore]
-        public List<Ingredient>?  Ingredients {get;set;}
+        public List<Ingredient>? Ingredients { get; set; }
 
     }
 }

@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace DataLayer.Items
+﻿namespace DataLayer.Items
 {
+    using System.ComponentModel.DataAnnotations;
+
     public class OrderItem
     {
         [Key]
@@ -11,7 +11,6 @@ namespace DataLayer.Items
         public int OrderId { get; set; }
 
         public Order? Order { get; set; }
-
 
         [Required]
         public int MealId { get; set; }

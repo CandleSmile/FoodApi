@@ -7,6 +7,5 @@ namespace BusinessLayer.Services.Interfaces
         Task<IEnumerable<UserDto>> GetUsersAsync();
 
         Task<UserDto?> GetUserByNameAsync(string userName);
-
     }
 }

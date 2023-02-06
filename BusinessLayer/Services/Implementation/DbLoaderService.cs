@@ -6,8 +6,6 @@ using DataLayer.Repositories.Interfaces;
 using System.Net;
 
 // To delete
-
-
 namespace BusinessLayer.Services.Implementation
 {
     public class DbLoaderService : IDbLoaderService
@@ -24,10 +22,8 @@ namespace BusinessLayer.Services.Implementation
 
         public async Task<string> LoadDb(DbLoadModel model)
         {
-
             try
             {
-
                 //process images 
                 foreach (var item in model.Categories)
                 {
@@ -45,7 +41,6 @@ namespace BusinessLayer.Services.Implementation
                     {
                         webClient.DownloadFile(item.Image, "Files\\images\\Meals\\" + item.Image.Replace("https://www.themealdb.com/images/media/meals/", ""));
                     }
-
 
                     item.Image = item.Image.Replace("https://www.themealdb.com/images/media/meals/", "");
                 }
@@ -117,6 +112,5 @@ namespace BusinessLayer.Services.Implementation
                 return ex.Message;
             }
         }
-
     }
 }

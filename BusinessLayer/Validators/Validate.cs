@@ -37,6 +37,14 @@ namespace BusinessLayer.Validators
             }
         }
 
+        public static void ValidateIsNotNulllOrEmpty(string? str, string? message)
+        {
+            if (string.IsNullOrEmpty(str))
+            {
+                throw ValidationExceptions.ObjectNotFound(message ?? $"The string  wasn't found");
+            }
+        }
+
         public static void ValidatePassword(string password, byte[] passwordSalt, byte[] passwordHash)
         {
             if (!HashHelper.VerifyPasswordHash(password, passwordSalt, passwordHash))

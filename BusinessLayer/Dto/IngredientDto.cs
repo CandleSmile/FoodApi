@@ -4,7 +4,6 @@ namespace BusinessLayer.Dto
 {
     public class IngredientDto
     {
-
         public int Id { get; set; }
 
         [Required]

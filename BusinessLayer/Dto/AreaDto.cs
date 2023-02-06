@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BusinessLayer.DTto
+namespace BusinessLayer.Dto
 {
     public class AreaDto
     {

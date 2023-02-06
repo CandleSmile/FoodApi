@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Utilities.ErrorHandle;
 
-
 //to delete
 namespace FoodApi.Controllers
 {
