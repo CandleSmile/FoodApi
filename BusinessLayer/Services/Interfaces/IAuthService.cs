@@ -16,5 +16,7 @@ namespace BusinessLayer.Services.Interfaces
         Task<bool> LoginUserAsync(LoginDto login);
 
         Task<UserDto> RegisterAsync(RegistrationDto userDto);
+
+        Task ChangePasswordAsync(ChangePasswordDto changePassword, int userId);
     }
 }

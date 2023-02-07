@@ -48,6 +48,19 @@
             return _mapper.Map<UserDto>(user);
         }
 
+        public async Task ChangePasswordAsync(ChangePasswordDto changePassword, int userId)
+        {
+            var validator = new ChangePasswordValidator(changePassword);
+            validator.Valid();
+
+            var (passwordSalt, passwordHash) = HashHelper.CreatePasswordHash(changePassword.Password);
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            _inputValidator.ValidateIsNotNull(user, "The user wasn't found by access token");
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            await _unitOfWork.SaveAsync();
+        }
+
         public async Task<bool> LoginUserAsync(LoginDto login)
         {
             var validator = new LoginDtoValidator(login);
@@ -58,7 +71,7 @@
 
             validator.ValidatePassword(user.PasswordSalt, user.PasswordHash);
 
-            string token = CreateAccessToken(user.Username);
+            string token = CreateAccessToken(user);
             string refreshToken = await CreateRefreshToken(user.Id);
             SetTokensToCookies(token, refreshToken);
             return true;
@@ -69,7 +82,7 @@
             var user = await GetUserByToken(accessToken);
             _inputValidator.ValidateIsNotNull(user, "can't get user by access token");
             _inputValidator.ValidateShouldBeEqual(user.RefreshToken, refreshToken, "The refreshToken is invalid", (int)ErrorCodes.NotValidRefreshToken);
-            var newAccessToken = CreateAccessToken(user.Username);
+            var newAccessToken = CreateAccessToken(user);
 
             return newAccessToken;
         }
@@ -105,11 +118,12 @@
         }
 
         #region private methods
-        private string CreateAccessToken(string userName)
+        private string CreateAccessToken(User user)
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, userName)
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim("Id", user.Id.ToString()),
             };
 
             (string? tokenKey, string? issuer, string? audience) = GetConfigurationOfTokens();

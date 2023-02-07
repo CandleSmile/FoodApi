@@ -71,7 +71,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -90,6 +89,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
         options.EventsType = typeof(CreationAccessTokenByRefreshToken);
     });
+builder.Services.AddAuthorization();
 
 // swagger authorization
 builder.Services.AddSwaggerGen();

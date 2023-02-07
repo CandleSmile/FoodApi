@@ -1,8 +1,10 @@
 ﻿using BusinessLayer.Dto;
 using BusinessLayer.Services.Interfaces;
 using FoodApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Utilities.ErrorHandle;
 
 namespace FoodApi.Controllers
@@ -24,6 +26,16 @@ namespace FoodApi.Controllers
         {
             var savedUser = await _authService.RegisterAsync(request);
             return Ok(savedUser);
+        }
+
+        [HttpPost("ChangePassword")]
+        [Authorize]
+        public async Task<ActionResult> ChangePassword(ChangePasswordDto request)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userId = identity.FindFirst("Id").Value;
+            await _authService.ChangePasswordAsync(request, Convert.ToInt32(userId));
+            return Ok();
         }
 
         [HttpPost("Login")]

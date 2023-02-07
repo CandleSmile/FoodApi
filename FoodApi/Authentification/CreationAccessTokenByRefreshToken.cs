@@ -12,12 +12,11 @@ namespace FoodApi.JWTBearEvents
     {
         public override async Task Challenge(JwtBearerChallengeContext context)
         {
-            context.HandleResponse();
-
             try
             {
                 if (context.AuthenticateFailure != null && context.AuthenticateFailure.GetType() == typeof(SecurityTokenExpiredException))
                 {
+                    context.HandleResponse();
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "application/json";
                     var authService = context.HttpContext.RequestServices
