@@ -48,9 +48,9 @@
             return mealsDto;
         }
 
-        public async Task<IEnumerable<MealDto>> GetTop10MealsAsync()
+        public async Task<IEnumerable<MealDto>> GetMealsAsync(int count, int skip)
         {
-            var mealsDto = _mapper.Map<IEnumerable<MealDto>>(await _unitOfWork.Meals.GetTop10MealsAsync());
+            var mealsDto = _mapper.Map<IEnumerable<MealDto>>(await _unitOfWork.Meals.GetMealsAsync(count, skip));
             foreach (var meal in mealsDto)
             {
                 meal.Image = _imagePath + meal.Image;

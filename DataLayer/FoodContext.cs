@@ -1,6 +1,4 @@
-﻿using Utilities.Helpers;
-
-namespace DataLayer
+﻿namespace DataLayer
 {
     using DataLayer.Items;
     using Microsoft.EntityFrameworkCore;
@@ -23,6 +21,12 @@ namespace DataLayer
 
         public DbSet<OrderItem> OrderItems { get; set; } = null!;
 
+        public DbSet<DeliveryDateTimeSlot> DeliveryDateTimeSlots { get; set; } = null!;
+
+        public DbSet<DeliveryDate> DeliveryDates { get; set; } = null!;
+
+        public DbSet<TimeSlot> TimeSlots { get; set; } = null!;
+
         public FoodContext(DbContextOptions<FoodContext> options)
             : base(options)
         {
@@ -38,11 +42,24 @@ namespace DataLayer
               .HasMany(c => c.Tags)
               .WithMany(s => s.Meals)
               .UsingEntity(j => j.ToTable("MealTags"));
-
-            var (passwordSalt, passwordHash) = HashHelper.CreatePasswordHash("14121980an");
-
-            modelBuilder.Entity<User>().HasData(
-                    new User { Id = 1, Username = "lizaveta.razumovich@gmail.com", PasswordSalt = passwordSalt, PasswordHash = passwordHash });
+            modelBuilder.Entity<DeliveryDate>()
+            .HasMany(c => c.TimeSlots)
+            .WithMany(s => s.DeliveryDates)
+            .UsingEntity<DeliveryDateTimeSlot>(j => j
+                .HasOne(pt => pt.TimeSlot)
+                .WithMany(p => p.DeliverуDateTimeSlots)
+                .HasForeignKey(pt => pt.TimeSlotId),
+               j => j
+                .HasOne(pt => pt.DeliveryDate)
+                .WithMany(t => t.DeliverуDateTimeSlots)
+                .HasForeignKey(pt => pt.DeliveryDateId),
+            j =>
+            {
+                j.Property(pt => pt.MaximumOrders);
+                j.Property(pt => pt.MadeOrders).HasDefaultValue(0);
+                j.HasKey(t => new { t.DeliveryDateId, t.TimeSlotId });
+                j.ToTable("DeliverуDateTimeSlots");
+            });
         }
     }
 }

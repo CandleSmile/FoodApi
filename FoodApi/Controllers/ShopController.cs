@@ -13,10 +13,12 @@ namespace FoodApi.Controllers
     public class ShopController : Controller
     {
         private readonly IOrderService _orderService;
+        private readonly IDeliveryService _deliveryService;
 
-        public ShopController(IOrderService orderService)
+        public ShopController(IOrderService orderService, IDeliveryService deliveryService)
         {
             _orderService = orderService;
+            _deliveryService = deliveryService;
         }
 
         [HttpPost("MakeOrder")]
@@ -31,6 +33,21 @@ namespace FoodApi.Controllers
         {
             var orders = await _orderService.GetOrdersByUserAsync();
             return Ok(orders);
+        }
+
+        [HttpGet("GetDeliveryDates")]
+        public async Task<ActionResult<IEnumerable<DeliveryDateDto>>> GetDates(DateTime fromDate)
+        {
+            var dates = await _deliveryService.GetDateAsync(fromDate);
+            return Ok(dates ?? new List<DeliveryDateDto>());
+        }
+
+
+        [HttpGet("GetDeliveryTimeSlots")]
+        public async Task<ActionResult<IEnumerable<DeliveryTimeSlotDto>>> GetTimeSlots(DateTime date)
+        {
+            var times = await _deliveryService.GetTimeSlotsAsync(date);
+            return Ok(times ?? new List<DeliveryTimeSlotDto>());
         }
     }
 }

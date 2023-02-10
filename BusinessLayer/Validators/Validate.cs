@@ -60,5 +60,13 @@ namespace BusinessLayer.Validators
                 throw ValidationExceptions.NotValidWithErrorCode(message ?? $"The object  wasn't found", errorCode);
             }
         }
+
+        public static void ValidateGreterZero(int number, string? message, int errorCode)
+        {
+            if (number <= 0)
+            {
+                throw ValidationExceptions.NotValidWithErrorCode(message ?? $"The list is empty", errorCode);
+            }
+        }
     }
 }

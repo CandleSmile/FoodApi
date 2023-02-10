@@ -16,6 +16,7 @@ namespace DataLayer.Repositories.Implementation
             Tags = new TagRepository(_context);
             Areas = new AreaRepository(_context);
             Orders = new OrderRepository(_context);
+            DeliveryDateTimeSlots = new DeliveryDateTimeSlotRepository(_context);
         }
 
         public IUserRepository Users { get; private set; }
@@ -31,6 +32,8 @@ namespace DataLayer.Repositories.Implementation
         public IAreaRepository Areas { get; private set; }
 
         public IOrderRepository Orders { get; private set; }
+
+        public IDeliveryDateTimeSlotRepository DeliveryDateTimeSlots { get; private set; }
 
         public Task<int> SaveAsync()
         {

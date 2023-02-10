@@ -19,6 +19,7 @@ namespace BusinessLayer
             CreateMap<Tag, TagDto>().ReverseMap();
             CreateMap<Order, OrderDto>().ReverseMap();
             CreateMap<OrderItem, OrderItemDto>().ReverseMap();
+            CreateMap<DeliveryDate, DeliveryDateDto>().ReverseMap();
             //start to delete
             CreateMap<Meal, MealDb>().ReverseMap();
             CreateMap<Category, CategoryDb>().ReverseMap();

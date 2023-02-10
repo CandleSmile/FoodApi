@@ -45,6 +45,7 @@ builder.Services.AddTransient<ICategoryService>(x => new CategoryService(pathToI
 builder.Services.AddTransient<IIngredientService, IngredientService>();
 builder.Services.AddTransient<IMealService>(x => new MealService(pathToImages.ImagePath, pathToImages.ThumbnailPath, x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<IMapper>()));
+builder.Services.AddTransient<IDeliveryService, DeliveryService>();
 builder.Services.AddTransient<IOrderService, OrderService>();
 builder.Services.AddTransient<IDbLoaderService, DbLoaderService>();
 builder.Services.Configure<AppSettings>(builder.Configuration);

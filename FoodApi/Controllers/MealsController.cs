@@ -2,7 +2,6 @@
 {
     using BusinessLayer.Dto;
     using BusinessLayer.Services.Interfaces;
-    using FoodApi.Models;
     using Microsoft.AspNetCore.Cors;
     using Microsoft.AspNetCore.Mvc;
 
@@ -29,11 +28,10 @@
             return Ok(meals);
         }
 
-        [HttpGet("GetLatestMeals")]
-        public async Task<ActionResult<IEnumerable<MealDto>>> GetLatestMeals()
+        [HttpGet("GetMealsByCount")]
+        public async Task<ActionResult<IEnumerable<MealDto>>> GetMealsByCount(int count, int skip)
         {
-            var meals = await this.mealService.GetTop10MealsAsync();
-
+            var meals = await this.mealService.GetMealsAsync(count, skip);
             return Ok(meals);
         }
 

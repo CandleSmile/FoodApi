@@ -4,7 +4,7 @@ namespace BusinessLayer.Services.Interfaces
 {
     public interface IMealService
     {
-        Task<IEnumerable<MealDto>> GetTop10MealsAsync();
+        Task<IEnumerable<MealDto>> GetMealsAsync(int count, int skip);
 
         Task<IEnumerable<MealDto>> GetMeals(MealsFilterParams mealsFilterParams);
 

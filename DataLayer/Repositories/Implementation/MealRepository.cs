@@ -55,9 +55,9 @@ namespace DataLayer.Repositories.Implementation
             return await query.Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).ToListAsync();
         }
 
-        public async Task<IEnumerable<Meal>?> GetTop10MealsAsync()
+        public async Task<IEnumerable<Meal>?> GetMealsAsync(int count, int skip)
         {
-            return await _context.Meals.Take(10).Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).ToListAsync();
+            return await _context.Meals.Skip(skip).Take(count).Include(meal => meal.Tags).Include(meal => meal.Area).Include(meal => meal.Category).ToListAsync();
         }
     }
 }
